@@ -1,0 +1,18 @@
+# Pinned so the project, and the container and volume it owns, don't depend on the folder's name.
+name: library
+
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: library-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Library!Dev1"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - library-sql-data:/var/opt/mssql
+
+volumes:
+  library-sql-data:

@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Library",
+    "Projects": [
+      {
+        "Path": "src\\Library.Service\\Library.Service.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "src\\Library.Api\\Library.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]

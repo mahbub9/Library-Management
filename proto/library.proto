@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package library;
+
+option csharp_namespace = "Library.Contracts";
