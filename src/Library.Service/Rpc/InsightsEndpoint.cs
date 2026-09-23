@@ -1,12 +1,16 @@
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Library.Contracts;
+using Library.Service.Circulation;
+using Library.Service.Domain;
 using Library.Service.Insights;
 
 namespace Library.Service.Rpc;
 
 public sealed class InsightsEndpoint(
     BookInsights books,
-    PatronInsights patrons) : InsightsService.InsightsServiceBase
+    PatronInsights patrons,
+    CirculationDesk desk) : InsightsService.InsightsServiceBase
 {
     private const int DefaultLimit = 10;
     private const int MaxLimit = 100;
@@ -68,6 +72,35 @@ public sealed class InsightsEndpoint(
         }));
 
         return response;
+    }
+
+    public override async Task<ReadingPaceReport> EstimateReadingPace(
+        ReadingPaceRequest request, ServerCallContext context)
+    {
+        var loan = await desk.GetLoan(request.LoanId, context.CancellationToken);
+
+        if (loan.IsOut)
+        {
+            throw new CirculationRuleException(
+                CirculationRule.StillOnLoan,
+                $"Loan {loan.Id} has not been returned, so there is no reading pace to measure.");
+        }
+
+        var pace = ReadingPace.Estimate(loan.Book.Pages, loan.CheckedOutOn, loan.ReturnedOn!.Value);
+
+        return new ReadingPaceReport
+        {
+            LoanId = loan.Id,
+            BookId = loan.BookId,
+            Title = loan.Book.Title,
+            Pages = loan.Book.Pages,
+            PatronId = loan.PatronId,
+            PatronName = loan.Patron.Name,
+            CheckedOutOn = Timestamp.FromDateTimeOffset(loan.CheckedOutOn),
+            ReturnedOn = Timestamp.FromDateTimeOffset(loan.ReturnedOn.Value),
+            DaysHeld = pace.DaysHeld,
+            PagesPerDay = pace.PagesPerDay
+        };
     }
 
     // This schema gives limit no explicit presence, so zero means "not supplied".

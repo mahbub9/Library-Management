@@ -6,7 +6,8 @@ public enum CirculationRule
     BookNotFound,
     LoanNotFound,
     AlreadyCheckedOut,
-    AlreadyReturned
+    AlreadyReturned,
+    StillOnLoan
 }
 
 public sealed class CirculationRuleException(CirculationRule rule, string message)

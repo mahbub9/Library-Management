@@ -30,3 +30,28 @@ public sealed record LoanResponse(
         loan.CheckedOutOn.ToDateTimeOffset(),
         loan.ReturnedOn?.ToDateTimeOffset());
 }
+
+public sealed record ReadingPaceResponse(
+    int LoanId,
+    int BookId,
+    string Title,
+    int Pages,
+    int PatronId,
+    string PatronName,
+    DateTimeOffset CheckedOutOn,
+    DateTimeOffset ReturnedOn,
+    double DaysHeld,
+    double PagesPerDay)
+{
+    public static ReadingPaceResponse From(ReadingPaceReport report) => new(
+        report.LoanId,
+        report.BookId,
+        report.Title,
+        report.Pages,
+        report.PatronId,
+        report.PatronName,
+        report.CheckedOutOn.ToDateTimeOffset(),
+        report.ReturnedOn.ToDateTimeOffset(),
+        report.DaysHeld,
+        report.PagesPerDay);
+}

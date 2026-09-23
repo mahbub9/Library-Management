@@ -16,6 +16,7 @@ service InsightsService {
   rpc MostBorrowedBooks (WindowedTopRequest) returns (PopularBookList);
   rpc MostActivePatrons (WindowedTopRequest) returns (ActivePatronList);
   rpc BorrowedTogether (BorrowedTogetherRequest) returns (BorrowedTogetherList);
+  rpc EstimateReadingPace (ReadingPaceRequest) returns (ReadingPaceReport);
 }
 
 message CheckOutRequest {
@@ -74,4 +75,19 @@ message BorrowedTogetherBook {
   string title = 2;
   string author = 3;
   int32 shared_readers = 4;
+}
+
+message ReadingPaceRequest { int32 loan_id = 1; }
+
+message ReadingPaceReport {
+  int32 loan_id = 1;
+  int32 book_id = 2;
+  string title = 3;
+  int32 pages = 4;
+  int32 patron_id = 5;
+  string patron_name = 6;
+  google.protobuf.Timestamp checked_out_on = 7;
+  google.protobuf.Timestamp returned_on = 8;
+  double days_held = 9;
+  double pages_per_day = 10;
 }

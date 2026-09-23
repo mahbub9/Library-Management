@@ -24,6 +24,7 @@ public sealed class CirculationRuleInterceptor : Interceptor
                 CirculationRule.LoanNotFound => StatusCode.NotFound,
                 CirculationRule.AlreadyCheckedOut => StatusCode.AlreadyExists,
                 CirculationRule.AlreadyReturned => StatusCode.FailedPrecondition,
+                CirculationRule.StillOnLoan => StatusCode.FailedPrecondition,
                 _ => StatusCode.Unknown
             };
 

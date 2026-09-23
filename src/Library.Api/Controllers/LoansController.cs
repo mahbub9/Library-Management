@@ -7,7 +7,8 @@ namespace Library.Api.Controllers;
 [ApiController]
 [Route("api/loans")]
 public sealed class LoansController(
-    CirculationService.CirculationServiceClient circulation) : ControllerBase
+    CirculationService.CirculationServiceClient circulation,
+    InsightsService.InsightsServiceClient insights) : ControllerBase
 {
     /// <summary>Lend a book to a patron.</summary>
     [HttpPost]
@@ -49,5 +50,18 @@ public sealed class LoansController(
             new CheckInRequest { LoanId = loanId }, cancellationToken: ct);
 
         return LoanResponse.From(loan);
+    }
+
+    /// <summary>Estimate the reading pace for a returned loan, in pages per day.</summary>
+    [HttpGet("{loanId:int}/reading-pace")]
+    [ProducesResponseType<ReadingPaceResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<ReadingPaceResponse> ReadingPace(int loanId, CancellationToken ct)
+    {
+        var report = await insights.EstimateReadingPaceAsync(
+            new ReadingPaceRequest { LoanId = loanId }, cancellationToken: ct);
+
+        return ReadingPaceResponse.From(report);
     }
 }

@@ -39,6 +39,27 @@ public class InsightEndpointTests(LibraryTestHost host) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Reading_pace_is_reported_for_a_returned_loan()
+    {
+        // Loan 18 was held for exactly 24 hours; its book runs to 258 pages.
+        var pace = await host.ApiClient
+            .GetFromJsonAsync<ReadingPaceResponse>("/api/loans/18/reading-pace");
+
+        pace.ShouldNotBeNull();
+        pace.DaysHeld.ShouldBe(1);
+        pace.PagesPerDay.ShouldBe(258);
+    }
+
+    [Fact]
+    public async Task Reading_pace_for_a_book_that_is_still_out_is_rejected()
+    {
+        // Loan 29 has no return date.
+        var response = await host.ApiClient.GetAsync("/api/loans/29/reading-pace");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Borrowed_together_counts_readers_rather_than_loans()
     {
         var together = await host.ApiClient

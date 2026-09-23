@@ -65,6 +65,7 @@ public class CirculationEndpointTests(LibraryTestHost host) : IAsyncLifetime
     [Theory]
     [InlineData("GET", "/api/loans/9999")]
     [InlineData("POST", "/api/loans/9999/return")]
+    [InlineData("GET", "/api/loans/9999/reading-pace")]
     public async Task An_unknown_loan_gives_404(string method, string path)
     {
         using var request = new HttpRequestMessage(new HttpMethod(method), path);

@@ -12,6 +12,15 @@ GET {{api}}/api/books/most-borrowed?limit=5&from=2025-09-01&to=2026-01-01
 ### Q2 - which patrons borrowed the most in a given time frame?
 GET {{api}}/api/patrons/most-active?limit=5
 
+### Q3 - reading pace. Loan 18 was held exactly one day.
+GET {{api}}/api/loans/18/reading-pace
+
+### Q3 - loan 19 was held 36 hours, so the pace uses a day and a half.
+GET {{api}}/api/loans/19/reading-pace
+
+### Q3 - loan 29 has not come back yet: 409.
+GET {{api}}/api/loans/29/reading-pace
+
 ### Q4 - what else did the people who borrowed this title borrow?
 GET {{api}}/api/books/1/borrowed-together?limit=5
 
