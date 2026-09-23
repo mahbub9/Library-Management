@@ -3,3 +3,28 @@ syntax = "proto3";
 package library;
 
 option csharp_namespace = "Library.Contracts";
+
+import "google/protobuf/timestamp.proto";
+
+service CirculationService {
+  rpc CheckOut (CheckOutRequest) returns (LoanView);
+  rpc GetLoan (GetLoanRequest) returns (LoanView);
+}
+
+message CheckOutRequest {
+  int32 patron_id = 1;
+  int32 book_id = 2;
+}
+
+message GetLoanRequest { int32 loan_id = 1; }
+
+message LoanView {
+  int32 loan_id = 1;
+  int32 book_id = 2;
+  string title = 3;
+  int32 patron_id = 4;
+  string patron_name = 5;
+  google.protobuf.Timestamp checked_out_on = 6;
+  // Absent while the book is still out.
+  google.protobuf.Timestamp returned_on = 7;
+}
