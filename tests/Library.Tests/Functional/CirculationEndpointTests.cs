@@ -64,6 +64,7 @@ public class CirculationEndpointTests(LibraryTestHost host) : IAsyncLifetime
 
     [Theory]
     [InlineData("GET", "/api/loans/9999")]
+    [InlineData("POST", "/api/loans/9999/return")]
     public async Task An_unknown_loan_gives_404(string method, string path)
     {
         using var request = new HttpRequestMessage(new HttpMethod(method), path);
@@ -80,5 +81,19 @@ public class CirculationEndpointTests(LibraryTestHost host) : IAsyncLifetime
             .PostAsJsonAsync("/api/loans", new { patronId = 0, bookId = -3 });
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Returning_a_loan_twice_gives_409()
+    {
+        var created = await host.ApiClient
+            .PostAsJsonAsync("/api/loans", new { patronId = Patron, bookId = 9 });
+        var loan = await created.Content.ReadFromJsonAsync<LoanResponse>();
+
+        var first = await host.ApiClient.PostAsync($"/api/loans/{loan!.LoanId}/return", null);
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var second = await host.ApiClient.PostAsync($"/api/loans/{loan.LoanId}/return", null);
+        second.StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 }

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Library.Service.Data;
 using Library.Service.Domain;
 using Microsoft.Data.SqlClient;
@@ -47,6 +48,32 @@ public sealed class CirculationDesk(LibraryDbContext db)
         return loan;
     }
 
+    public async Task<Loan> CheckIn(int loanId, DateTimeOffset now, CancellationToken ct)
+    {
+        var loan = await GetLoan(loanId, ct);
+
+        if (!loan.IsOut)
+        {
+            throw AlreadyReturned(loan);
+        }
+
+        loan.ReturnedOn = now;
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another request returned it between the read above and this write; its return stands.
+            await db.Entry(loan).ReloadAsync(ct);
+
+            throw AlreadyReturned(loan);
+        }
+
+        return loan;
+    }
+
     public async Task<Loan> GetLoan(int loanId, CancellationToken ct) =>
         await db.Loans
             .Include(loan => loan.Book)
@@ -57,6 +84,10 @@ public sealed class CirculationDesk(LibraryDbContext db)
 
     private static CirculationRuleException AlreadyHasIt(Patron patron, Book book) =>
         new(CirculationRule.AlreadyCheckedOut, $"{patron.Name} already has \"{book.Title}\" out.");
+
+    private static CirculationRuleException AlreadyReturned(Loan loan) =>
+        new(CirculationRule.AlreadyReturned, string.Create(CultureInfo.InvariantCulture,
+            $"Loan {loan.Id} was already returned on {loan.ReturnedOn:yyyy-MM-dd}."));
 
     private static bool IsDuplicateOpenLoan(DbUpdateException failure) =>
         failure.InnerException is SqlException sql &&

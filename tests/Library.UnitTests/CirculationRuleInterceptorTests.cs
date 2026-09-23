@@ -16,6 +16,7 @@ public class CirculationRuleInterceptorTests
     [InlineData(CirculationRule.BookNotFound, StatusCode.NotFound)]
     [InlineData(CirculationRule.LoanNotFound, StatusCode.NotFound)]
     [InlineData(CirculationRule.AlreadyCheckedOut, StatusCode.AlreadyExists)]
+    [InlineData(CirculationRule.AlreadyReturned, StatusCode.FailedPrecondition)]
     [InlineData((CirculationRule)99, StatusCode.Unknown)]
     public async Task The_service_turns_a_broken_rule_into_its_grpc_status(
         CirculationRule rule, StatusCode expected)

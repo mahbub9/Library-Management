@@ -21,6 +21,16 @@ public sealed class CirculationEndpoint(CirculationDesk desk, ILogger<Circulatio
         return ToView(loan);
     }
 
+    public override async Task<LoanView> CheckIn(CheckInRequest request, ServerCallContext context)
+    {
+        var loan = await desk.CheckIn(request.LoanId, DateTimeOffset.UtcNow, context.CancellationToken);
+
+        log.LogInformation("Loan {LoanId} returned after {Days:0.0} days",
+            loan.Id, (loan.ReturnedOn!.Value - loan.CheckedOutOn).TotalDays);
+
+        return ToView(loan);
+    }
+
     public override async Task<LoanView> GetLoan(GetLoanRequest request, ServerCallContext context)
     {
         var loan = await desk.GetLoan(request.LoanId, context.CancellationToken);

@@ -37,4 +37,17 @@ public sealed class LoansController(
 
         return LoanResponse.From(loan);
     }
+
+    /// <summary>Take a book back.</summary>
+    [HttpPost("{loanId:int}/return")]
+    [ProducesResponseType<LoanResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public async Task<LoanResponse> Return(int loanId, CancellationToken ct)
+    {
+        var loan = await circulation.CheckInAsync(
+            new CheckInRequest { LoanId = loanId }, cancellationToken: ct);
+
+        return LoanResponse.From(loan);
+    }
 }

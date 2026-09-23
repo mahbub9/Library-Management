@@ -25,6 +25,9 @@ public class LibraryDbContext(DbContextOptions<LibraryDbContext> options) : DbCo
         {
             loan.Ignore(l => l.IsOut);
 
+            // A return lands only while the loan is still out: of two at once, the second fails.
+            loan.Property(l => l.ReturnedOn).IsConcurrencyToken();
+
             loan.HasOne(l => l.Book).WithMany().HasForeignKey(l => l.BookId);
             loan.HasOne(l => l.Patron).WithMany().HasForeignKey(l => l.PatronId);
 

@@ -21,5 +21,8 @@ Content-Type: application/json
   "bookId": 5
 }
 
+### Take the loan id from the 201 and bring the book back
+POST {{api}}/api/loans/31/return
+
 ### Fetch a loan
 GET {{api}}/api/loans/31

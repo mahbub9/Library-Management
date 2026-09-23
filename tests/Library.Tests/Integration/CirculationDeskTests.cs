@@ -1,3 +1,4 @@
+using System.Globalization;
 using Library.Service.Circulation;
 using Library.Service.Data;
 using Library.Service.Domain;
@@ -58,6 +59,63 @@ public class CirculationDeskTests(LibraryTestHost host) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_same_title_can_be_borrowed_again_once_it_has_come_back()
+    {
+        await using var db = host.NewDbContext();
+        var desk = new CirculationDesk(db);
+        var (book, patron) = await Given(db, "Sapiens", "Claire Dunne");
+
+        var first = await desk.CheckOut(patron.Id, book.Id, March, default);
+        await desk.CheckIn(first.Id, March.AddDays(10), default);
+
+        var second = await desk.CheckOut(patron.Id, book.Id, March.AddDays(20), default);
+
+        second.Id.ShouldNotBe(first.Id);
+    }
+
+    [Fact]
+    public async Task A_loan_cannot_be_returned_twice()
+    {
+        await using var db = host.NewDbContext();
+        var desk = new CirculationDesk(db);
+        var (book, patron) = await Given(db, "Snow Country", "Elena Ruiz");
+
+        var loan = await desk.CheckOut(patron.Id, book.Id, March, default);
+        await desk.CheckIn(loan.Id, March.AddDays(3), default);
+
+        var broken = await Should.ThrowAsync<CirculationRuleException>(
+            () => desk.CheckIn(loan.Id, March.AddDays(4), default));
+
+        broken.Rule.ShouldBe(CirculationRule.AlreadyReturned);
+    }
+
+    [Fact]
+    public async Task The_already_returned_message_gives_a_gregorian_date_under_any_culture()
+    {
+        await using var db = host.NewDbContext();
+        var desk = new CirculationDesk(db);
+        var (book, patron) = await Given(db, "Pachinko", "Priya Nair");
+
+        var loan = await desk.CheckOut(patron.Id, book.Id, March, default);
+        await desk.CheckIn(loan.Id, March.AddDays(3), default);
+
+        var original = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("th-TH");   // Buddhist calendar: 2026 is 2569
+
+        try
+        {
+            var broken = await Should.ThrowAsync<CirculationRuleException>(
+                () => desk.CheckIn(loan.Id, March.AddDays(4), default));
+
+            broken.Message.ShouldContain("2026-03-04");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
+    }
+
+    [Fact]
     public async Task A_checkout_that_loses_a_race_is_refused_by_the_index()
     {
         await using var db = host.NewDbContext();
@@ -70,6 +128,22 @@ public class CirculationDeskTests(LibraryTestHost host) : IAsyncLifetime
             () => new CirculationDesk(raced).CheckOut(patron.Id, book.Id, March, default));
 
         broken.Rule.ShouldBe(CirculationRule.AlreadyCheckedOut);
+    }
+
+    [Fact]
+    public async Task A_return_that_loses_a_race_is_refused_and_the_first_return_stands()
+    {
+        await using var db = host.NewDbContext();
+        var (book, patron) = await Given(db, "Beloved", "Bo Lindqvist");
+        var loan = await new CirculationDesk(db).CheckOut(patron.Id, book.Id, March, default);
+
+        await using var raced = RacedBy(rival => rival.CheckIn(loan.Id, March.AddDays(2), default));
+
+        var broken = await Should.ThrowAsync<CirculationRuleException>(
+            () => new CirculationDesk(raced).CheckIn(loan.Id, March.AddDays(5), default));
+
+        broken.Rule.ShouldBe(CirculationRule.AlreadyReturned);
+        broken.Message.ShouldContain("2026-03-03");
     }
 
     private LibraryDbContext RacedBy(Func<CirculationDesk, Task> rival) =>

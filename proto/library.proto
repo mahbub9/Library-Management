@@ -8,6 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 service CirculationService {
   rpc CheckOut (CheckOutRequest) returns (LoanView);
+  rpc CheckIn (CheckInRequest) returns (LoanView);
   rpc GetLoan (GetLoanRequest) returns (LoanView);
 }
 
@@ -15,6 +16,8 @@ message CheckOutRequest {
   int32 patron_id = 1;
   int32 book_id = 2;
 }
+
+message CheckInRequest { int32 loan_id = 1; }
 
 message GetLoanRequest { int32 loan_id = 1; }
 

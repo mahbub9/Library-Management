@@ -23,6 +23,7 @@ public sealed class CirculationRuleInterceptor : Interceptor
                 CirculationRule.BookNotFound => StatusCode.NotFound,
                 CirculationRule.LoanNotFound => StatusCode.NotFound,
                 CirculationRule.AlreadyCheckedOut => StatusCode.AlreadyExists,
+                CirculationRule.AlreadyReturned => StatusCode.FailedPrecondition,
                 _ => StatusCode.Unknown
             };
 
