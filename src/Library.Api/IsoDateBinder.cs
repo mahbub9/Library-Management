@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Library.Api;
 
-// Dates are accepted as yyyy-MM-dd only. The default binder also reads "01/09/2025", month first,
-// as 9 January — which is 1 September to most of the world, and would silently shift the window.
+// Dates are accepted as yyyy-MM-dd only. The default binder also reads "01/09/2025" month first,
+// as 9 January, when most of the world means 1 September. That would silently shift the window.
 public sealed class IsoDateBinder : IModelBinder
 {
     public Task BindModelAsync(ModelBindingContext context)
