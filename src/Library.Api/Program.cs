@@ -23,8 +23,13 @@ builder.Services.AddOpenApi(options => options.AddDocumentTransformer((document,
 var library = new Uri(builder.Configuration["Services:Library"]
     ?? throw new InvalidOperationException("Services:Library is not configured."));
 
-builder.Services.AddGrpcClient<CirculationService.CirculationServiceClient>(o => o.Address = library);
-builder.Services.AddGrpcClient<InsightsService.InsightsServiceClient>(o => o.Address = library);
+// Generous for queries over this data; well short of a caller giving up on the API.
+var deadline = new DeadlineInterceptor(TimeSpan.FromSeconds(10));
+
+builder.Services.AddGrpcClient<CirculationService.CirculationServiceClient>(o => o.Address = library)
+    .AddInterceptor(() => deadline);
+builder.Services.AddGrpcClient<InsightsService.InsightsServiceClient>(o => o.Address = library)
+    .AddInterceptor(() => deadline);
 
 var app = builder.Build();
 
