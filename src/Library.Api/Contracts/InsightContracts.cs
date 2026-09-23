@@ -50,3 +50,5 @@ public sealed record TopQuery : IValidatableObject
 public sealed record PopularBookResponse(int BookId, string Title, string Author, int TimesBorrowed);
 
 public sealed record ActivePatronResponse(int PatronId, string Name, int BooksBorrowed);
+
+public sealed record BorrowedTogetherResponse(int BookId, string Title, string Author, int SharedReaders);

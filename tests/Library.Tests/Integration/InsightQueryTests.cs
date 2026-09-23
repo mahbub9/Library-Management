@@ -61,6 +61,78 @@ public class InsightQueryTests(LibraryTestHost host) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Other_titles_read_by_the_same_patrons_come_back_ranked()
+    {
+        await using var db = host.NewDbContext();
+
+        var anchor = Book("Domain-Driven Design");
+        var second = Book("Refactoring");
+        var third = Book("The Pragmatic Programmer");
+        var unrelated = Book("Snow Country");
+        var ada = Patron("Ada");
+        var bo = Patron("Bo");
+        var cai = Patron("Cai");
+        var solo = Patron("Solo");
+        db.AddRange(anchor, second, third, unrelated, ada, bo, cai, solo);
+        await db.SaveChangesAsync();
+
+        Lend(db, anchor, ada, [0]);   Lend(db, second, ada, [10]);
+        Lend(db, anchor, bo, [0]);    Lend(db, second, bo, [10]);  Lend(db, third, bo, [20]);
+        Lend(db, anchor, cai, [0]);   Lend(db, third, cai, [20]);
+        Lend(db, unrelated, solo, [0]);   // nobody who read the anchor also read this
+        await db.SaveChangesAsync();
+
+        var together = await new BookInsights(db).BorrowedTogether(anchor.Id, 10, default);
+
+        together.Select(row => row.Title).ToArray()
+            .ShouldBe(new[] { "Refactoring", "The Pragmatic Programmer" });
+        together[0].SharedReaders.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Each_patron_counts_once_however_often_they_borrowed_a_title()
+    {
+        await using var db = host.NewDbContext();
+
+        var anchor = Book("Moby Dick");
+        var reread = Book("Beloved");
+        var shared = Book("Cloud Atlas");
+        var enthusiast = Patron("Enthusiast");
+        var bo = Patron("Bo");
+        var cai = Patron("Cai");
+        db.AddRange(anchor, reread, shared, enthusiast, bo, cai);
+        await db.SaveChangesAsync();
+
+        Lend(db, anchor, enthusiast, [0]);
+        Lend(db, reread, enthusiast, [10, 20, 30]);   // one patron, three loans
+        Lend(db, anchor, bo, [0]);   Lend(db, shared, bo, [10]);
+        Lend(db, anchor, cai, [0]);  Lend(db, shared, cai, [10]);
+        await db.SaveChangesAsync();
+
+        var together = await new BookInsights(db).BorrowedTogether(anchor.Id, 10, default);
+
+        together[0].Title.ShouldBe("Cloud Atlas");
+        together[0].SharedReaders.ShouldBe(2);
+        together[1].Title.ShouldBe("Beloved");
+        together[1].SharedReaders.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_book_exists_only_once_it_is_in_the_catalogue()
+    {
+        await using var db = host.NewDbContext();
+
+        var book = Book("Beloved");
+        db.Add(book);
+        await db.SaveChangesAsync();
+
+        var insights = new BookInsights(db);
+
+        (await insights.Exists(book.Id, default)).ShouldBeTrue();
+        (await insights.Exists(book.Id + 1, default)).ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Only_loans_inside_the_window_are_counted()
     {
         await using var db = host.NewDbContext();

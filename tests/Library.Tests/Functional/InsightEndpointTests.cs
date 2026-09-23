@@ -39,6 +39,36 @@ public class InsightEndpointTests(LibraryTestHost host) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Borrowed_together_counts_readers_rather_than_loans()
+    {
+        var together = await host.ApiClient
+            .GetFromJsonAsync<BorrowedTogetherResponse[]>("/api/books/1/borrowed-together?limit=5");
+
+        together.ShouldNotBeNull();
+        together.ShouldAllBe(book => book.BookId != 1);
+
+        // Book 4 is in four loans among the readers of book 1, but only two people borrowed it.
+        together.Single(book => book.BookId == 4).SharedReaders.ShouldBe(2);
+        together[0].SharedReaders.ShouldBe(4);
+    }
+
+    [Fact]
+    public async Task Borrowed_together_for_a_book_that_is_not_in_the_catalogue_is_rejected()
+    {
+        var response = await host.ApiClient.GetAsync("/api/books/999/borrowed-together");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task A_limit_outside_the_allowed_range_is_rejected()
+    {
+        var response = await host.ApiClient.GetAsync("/api/books/1/borrowed-together?limit=0");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task A_window_that_ends_before_it_starts_is_rejected()
     {
         var response = await host.ApiClient

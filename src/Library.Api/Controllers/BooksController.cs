@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Library.Api.Contracts;
 using Library.Contracts;
 using Microsoft.AspNetCore.Mvc;
@@ -19,5 +20,20 @@ public sealed class BooksController(InsightsService.InsightsServiceClient insigh
 
         return [.. ranked.Books.Select(book =>
             new PopularBookResponse(book.BookId, book.Title, book.Author, book.TimesBorrowed))];
+    }
+
+    /// <summary>What else was borrowed by the people who borrowed this title?</summary>
+    [HttpGet("{bookId:int}/borrowed-together")]
+    [ProducesResponseType<IReadOnlyList<BorrowedTogetherResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IReadOnlyList<BorrowedTogetherResponse>> BorrowedTogether(
+        int bookId, [FromQuery][Range(1, 100)] int limit = 10, CancellationToken ct = default)
+    {
+        var together = await insights.BorrowedTogetherAsync(
+            new BorrowedTogetherRequest { BookId = bookId, Limit = limit }, cancellationToken: ct);
+
+        return [.. together.Books.Select(book =>
+            new BorrowedTogetherResponse(book.BookId, book.Title, book.Author, book.SharedReaders))];
     }
 }

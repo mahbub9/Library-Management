@@ -46,6 +46,30 @@ public sealed class InsightsEndpoint(
         return response;
     }
 
+    public override async Task<BorrowedTogetherList> BorrowedTogether(
+        BorrowedTogetherRequest request, ServerCallContext context)
+    {
+        if (!await books.Exists(request.BookId, context.CancellationToken))
+        {
+            throw new RpcException(new Status(
+                StatusCode.NotFound, $"Book {request.BookId} is not in the catalogue."));
+        }
+
+        var rows = await books.BorrowedTogether(
+            request.BookId, Limit(request.Limit), context.CancellationToken);
+
+        var response = new BorrowedTogetherList();
+        response.Books.Add(rows.Select(row => new BorrowedTogetherBook
+        {
+            BookId = row.BookId,
+            Title = row.Title,
+            Author = row.Author,
+            SharedReaders = row.SharedReaders
+        }));
+
+        return response;
+    }
+
     // This schema gives limit no explicit presence, so zero means "not supplied".
     private static int Limit(int requested) => requested switch
     {
