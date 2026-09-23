@@ -1,6 +1,12 @@
+using Library.Api;
+using Library.Contracts;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<RpcProblemDetailsHandler>();
 
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer((document, _, _) =>
 {
@@ -13,13 +19,22 @@ builder.Services.AddOpenApi(options => options.AddDocumentTransformer((document,
     return Task.CompletedTask;
 }));
 
+var library = new Uri(builder.Configuration["Services:Library"]
+    ?? throw new InvalidOperationException("Services:Library is not configured."));
+
+builder.Services.AddGrpcClient<CirculationService.CirculationServiceClient>(o => o.Address = library);
+
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.MapControllers();
 
 app.Run();
 

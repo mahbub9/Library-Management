@@ -1,0 +1,25 @@
+# 1. docker compose up -d
+# 2. F5 (both projects start)
+
+@api = https://localhost:7138
+
+### Lend a book
+POST {{api}}/api/loans
+Content-Type: application/json
+
+{
+  "patronId": 6,
+  "bookId": 5
+}
+
+### Send it again - 409, the patron already has it
+POST {{api}}/api/loans
+Content-Type: application/json
+
+{
+  "patronId": 6,
+  "bookId": 5
+}
+
+### Fetch a loan
+GET {{api}}/api/loans/31
