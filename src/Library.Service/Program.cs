@@ -1,5 +1,6 @@
 using Library.Service.Circulation;
 using Library.Service.Data;
+using Library.Service.Insights;
 using Library.Service.Rpc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,10 +14,13 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
         sql => sql.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<CirculationDesk>();
+builder.Services.AddScoped<BookInsights>();
+builder.Services.AddScoped<PatronInsights>();
 
 var app = builder.Build();
 
 app.MapGrpcService<CirculationEndpoint>();
+app.MapGrpcService<InsightsEndpoint>();
 
 // Migrating at startup keeps the run story simple; production would migrate before the rollout.
 using (var scope = app.Services.CreateScope())

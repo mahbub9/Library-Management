@@ -3,6 +3,18 @@
 
 @api = https://localhost:7138
 
+### Q1 - what are the most borrowed books?
+GET {{api}}/api/books/most-borrowed?limit=5
+
+### Q1 narrowed to a window (half-open: includes 2025-09-01, excludes 2026-01-01)
+GET {{api}}/api/books/most-borrowed?limit=5&from=2025-09-01&to=2026-01-01
+
+### Q2 - which patrons borrowed the most in a given time frame?
+GET {{api}}/api/patrons/most-active?limit=5
+
+### A limit outside 1-100: 400.
+GET {{api}}/api/books/most-borrowed?limit=0
+
 ### Lend a book
 POST {{api}}/api/loans
 Content-Type: application/json

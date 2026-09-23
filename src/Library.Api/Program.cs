@@ -4,7 +4,8 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+    options.ModelBinderProviders.Insert(0, new IsoDateBinderProvider()));
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<RpcProblemDetailsHandler>();
 
@@ -23,6 +24,7 @@ var library = new Uri(builder.Configuration["Services:Library"]
     ?? throw new InvalidOperationException("Services:Library is not configured."));
 
 builder.Services.AddGrpcClient<CirculationService.CirculationServiceClient>(o => o.Address = library);
+builder.Services.AddGrpcClient<InsightsService.InsightsServiceClient>(o => o.Address = library);
 
 var app = builder.Build();
 
