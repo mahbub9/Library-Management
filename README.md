@@ -27,8 +27,9 @@ certificate appears as a gRPC connection failure rather than a browser warning.
 docker compose up -d
 ```
 
-The first run pulls the SQL Server image, about 600 MB. Then start both projects on their `https`
-profiles. The API is configured to find the service at `https://localhost:7285`:
+The first run pulls the SQL Server image, about 600 MB. Then start both projects, each in its own
+terminal, on their `https` profiles. The API is configured to find the service at
+`https://localhost:7285`:
 
 ```
 dotnet run --project src/Library.Service --launch-profile https
